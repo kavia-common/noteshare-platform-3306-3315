@@ -15,10 +15,16 @@ export function useNotes({ q, tag, sort, page, pageSize = 12 }) {
     let active = true;
     setLoading(true);
     fetchNotes({ q, tag, sort, limit: pageSize, offset })
-      .then(({ data, count }) => {
+      .then(({ items, total }) => {
         if (!active) return;
-        setNotes(data);
-        setCount(count);
+        setNotes(items);
+        setCount(total);
+      })
+      .catch(() => {
+        if (active) {
+          setNotes([]);
+          setCount(0);
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
