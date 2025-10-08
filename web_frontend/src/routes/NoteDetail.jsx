@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import Spinner from "../components/Spinner";
 import Button from "../components/Button";
 import { fetchNoteById, toggleBookmark, toggleLike } from "../lib/db";
+import { useAuth } from "../hooks/useAuth";
 
 /**
  * PUBLIC_INTERFACE
@@ -10,6 +11,7 @@ import { fetchNoteById, toggleBookmark, toggleLike } from "../lib/db";
  */
 export default function NoteDetail() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [note, setNote] = useState(null);
   const [busy, setBusy] = useState(true);
   const [likeLoading, setLikeLoading] = useState(false);
@@ -30,7 +32,7 @@ export default function NoteDetail() {
   async function doLike() {
     setLikeLoading(true);
     try {
-      const val = await toggleLike(note.id, true);
+      const val = await toggleLike(note.id, true, user?.id || "local_user");
       setNote((n) => ({ ...n, likes_count: val }));
     } finally {
       setLikeLoading(false);
@@ -40,7 +42,7 @@ export default function NoteDetail() {
   async function doBookmark() {
     setBookmarkLoading(true);
     try {
-      const val = await toggleBookmark(note.id, true);
+      const val = await toggleBookmark(note.id, true, user?.id || "local_user");
       setNote((n) => ({ ...n, bookmarks_count: val }));
     } finally {
       setBookmarkLoading(false);

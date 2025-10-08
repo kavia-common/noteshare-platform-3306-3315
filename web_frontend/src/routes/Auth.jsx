@@ -6,10 +6,10 @@ import { useAuth } from "../hooks/useAuth";
 
 /**
  * PUBLIC_INTERFACE
- * Auth: Sign in/up with email/password, Google OAuth
+ * Auth: Sign in/up with email/password (local mock).
  */
 export default function Auth() {
-  const { signInWithEmail, signUpWithEmail, signInWithGoogle, session } = useAuth();
+  const { signInWithEmail, signUpWithEmail, session } = useAuth();
   const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,17 +40,6 @@ export default function Auth() {
     }
   }
 
-  async function handleGoogle() {
-    setBusy(true);
-    setError("");
-    try {
-      await signInWithGoogle();
-    } catch (err) {
-      setError(err.message || "Failed to start Google sign-in");
-      setBusy(false);
-    }
-  }
-
   return (
     <div className="max-w-md mx-auto">
       <div className="card p-6">
@@ -65,14 +54,6 @@ export default function Auth() {
           {error && <p className="text-sm text-red-600">{error}</p>}
           <Button type="submit" disabled={busy} className="w-full">{busy ? "Please wait..." : mode === "signin" ? "Sign in" : "Sign up"}</Button>
         </form>
-
-        <div className="my-4 flex items-center gap-3">
-          <div className="h-px flex-1 bg-gray-200" />
-          <span className="text-xs text-gray-500">OR</span>
-          <div className="h-px flex-1 bg-gray-200" />
-        </div>
-
-        <Button onClick={handleGoogle} variant="ghost" className="w-full">Continue with Google</Button>
 
         <p className="text-sm text-gray-600 mt-4">
           {mode === "signin" ? (

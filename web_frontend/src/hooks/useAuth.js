@@ -1,65 +1,80 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { getSupabaseClient } from "../supabaseClient";
+import { useEffect, useState, useCallback } from "react";
 
 /**
  * PUBLIC_INTERFACE
- * useAuth: Provides Supabase auth session and helpers.
+ * useAuth: Provides local mock auth using localStorage (no external services).
+ * - session: { user: { id, email } } | null
+ * - user: { id, email } | null
+ * - signInWithEmail(email, password)
+ * - signUpWithEmail(email, password)
+ * - signOut()
  */
 export function useAuth() {
-  const supabase = useMemo(() => getSupabaseClient(), []);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize auth state
+  // Load from localStorage once
   useEffect(() => {
-    let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (mounted) {
-        setSession(data.session || null);
-        setLoading(false);
+    const raw = localStorage.getItem("ns_session");
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed?.user?.id && parsed?.user?.email) {
+          setSession(parsed);
+        }
+      } catch {
+        // ignore
       }
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-    });
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
-  }, [supabase]);
+    }
+    setLoading(false);
+  }, []);
+
+  // Create a simple users store in localStorage
+  function getUsers() {
+    try {
+      return JSON.parse(localStorage.getItem("ns_users") || "[]");
+    } catch {
+      return [];
+    }
+  }
+  function setUsers(users) {
+    localStorage.setItem("ns_users", JSON.stringify(users));
+  }
 
   const signInWithEmail = useCallback(async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    return data;
-  }, [supabase]);
+    const users = getUsers();
+    const exists = users.find((u) => u.email === email && u.password === password);
+    if (!exists) {
+      const err = new Error("Invalid email or password");
+      err.code = "auth/invalid-credentials";
+      throw err;
+    }
+    const nextSession = { user: { id: exists.id, email: exists.email } };
+    localStorage.setItem("ns_session", JSON.stringify(nextSession));
+    setSession(nextSession);
+    return nextSession;
+  }, []);
 
   const signUpWithEmail = useCallback(async (email, password) => {
-    const redirectTo = process.env.REACT_APP_OAUTH_REDIRECT_URL;
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectTo || window.location.origin + "/auth",
-      },
-    });
-    if (error) throw error;
-    return data;
-  }, [supabase]);
-
-  const signInWithGoogle = useCallback(async () => {
-    const redirectTo = process.env.REACT_APP_OAUTH_REDIRECT_URL || window.location.origin + "/auth";
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo },
-    });
-    if (error) throw error;
-    return data;
-  }, [supabase]);
+    const users = getUsers();
+    if (users.find((u) => u.email === email)) {
+      const err = new Error("Email already registered");
+      err.code = "auth/email-in-use";
+      throw err;
+    }
+    const newUser = { id: `user_${Date.now().toString(36)}`, email, password };
+    users.push(newUser);
+    setUsers(users);
+    const nextSession = { user: { id: newUser.id, email: newUser.email } };
+    localStorage.setItem("ns_session", JSON.stringify(nextSession));
+    setSession(nextSession);
+    return nextSession;
+  }, []);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
-  }, [supabase]);
+    localStorage.removeItem("ns_session");
+    setSession(null);
+  }, []);
 
-  return { session, user: session?.user ?? null, loading, signInWithEmail, signUpWithEmail, signInWithGoogle, signOut };
+  return { session, user: session?.user ?? null, loading, signInWithEmail, signUpWithEmail, signOut };
 }

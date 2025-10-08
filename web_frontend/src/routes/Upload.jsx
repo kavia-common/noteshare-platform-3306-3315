@@ -8,7 +8,7 @@ import { useAuth } from "../hooks/useAuth";
 
 /**
  * PUBLIC_INTERFACE
- * Upload: Upload PDF to storage and insert metadata
+ * Upload: Upload PDF (stub) and insert metadata locally.
  */
 export default function Upload() {
   const { user } = useAuth();
@@ -25,7 +25,7 @@ export default function Upload() {
       setMsg("Please provide a PDF file and a title.");
       return;
     }
-    if (!file.name.toLowerCase().endsWith(".pdf")) {
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
       setMsg("Only PDF files are allowed.");
       return;
     }

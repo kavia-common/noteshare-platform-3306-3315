@@ -31,7 +31,7 @@ export default function App() {
       </main>
       <footer className="mt-12 py-8 text-center text-sm text-gray-500">
         <p className="mb-2">
-          Built with <span className="text-ocean-secondary">Supabase</span> + React + Tailwind
+          Built with React + Tailwind (local mock data, no backend)
         </p>
         <Link className="text-blue-600 hover:underline" to="/">Home</Link>
       </footer>
