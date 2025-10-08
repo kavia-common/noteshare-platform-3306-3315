@@ -59,12 +59,12 @@ export function useAuth() {
 
   const signUpWithEmail = useCallback(async (email, password) => {
     setError(null);
-    const site = process.env.REACT_APP_SITE_URL || window.location.origin;
+    const redirectTo = process.env.REACT_APP_OAUTH_REDIRECT_URL || `${window.location.origin}/auth`;
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: site,
+        emailRedirectTo: redirectTo,
       },
     });
     if (error) throw error;
@@ -73,11 +73,11 @@ export function useAuth() {
 
   const signInWithGoogle = useCallback(async () => {
     setError(null);
-    const site = process.env.REACT_APP_SITE_URL || window.location.origin;
+    const redirectTo = process.env.REACT_APP_OAUTH_REDIRECT_URL || `${window.location.origin}/auth`;
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: site,
+        redirectTo,
       },
     });
     if (error) throw error;

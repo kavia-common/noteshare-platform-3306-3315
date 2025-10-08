@@ -16,34 +16,54 @@ export default function NoteDetail() {
   const [busy, setBusy] = useState(true);
   const [likeLoading, setLikeLoading] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     setBusy(true);
     fetchNoteById(id)
-      .then((n) => mounted && setNote(n))
+      .then((n) => {
+        if (!mounted) return;
+        setNote(n);
+      })
       .finally(() => mounted && setBusy(false));
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [id]);
+
+  // Initialize liked/bookmarked state by inferring from counts (best-effort)
+  useEffect(() => {
+    if (!note || !user) return;
+    // We don't have a dedicated existence check endpoint here; rely on UI toggle result afterwards.
+    setLiked(false);
+    setBookmarked(false);
+  }, [note, user]);
 
   if (busy) return <Spinner label="Loading note..." />;
   if (!note) return <div className="card p-6">Note not found.</div>;
 
   async function doLike() {
+    if (!user?.id) return;
     setLikeLoading(true);
     try {
-      const val = await toggleLike(note.id, true, user?.id || "local_user");
-      setNote((n) => ({ ...n, likes_count: val }));
+      const newCount = await toggleLike(note.id, user.id);
+      // Toggle optimistic state by comparing to previous count direction is unknown; flip liked
+      setLiked((v) => !v);
+      setNote((n) => ({ ...n, likes_count: newCount }));
     } finally {
       setLikeLoading(false);
     }
   }
 
   async function doBookmark() {
+    if (!user?.id) return;
     setBookmarkLoading(true);
     try {
-      const val = await toggleBookmark(note.id, true, user?.id || "local_user");
-      setNote((n) => ({ ...n, bookmarks_count: val }));
+      const newCount = await toggleBookmark(note.id, user.id);
+      setBookmarked((v) => !v);
+      setNote((n) => ({ ...n, bookmarks_count: newCount }));
     } finally {
       setBookmarkLoading(false);
     }
@@ -66,8 +86,12 @@ export default function NoteDetail() {
       </div>
       <aside className="card p-4 h-max">
         <div className="space-y-2">
-          <Button onClick={doLike} disabled={likeLoading} className="w-full">❤️ Like ({note.likes_count || 0})</Button>
-          <Button variant="secondary" onClick={doBookmark} disabled={bookmarkLoading} className="w-full">🔖 Bookmark ({note.bookmarks_count || 0})</Button>
+          <Button onClick={doLike} disabled={likeLoading} className="w-full">
+            {liked ? "💔 Unlike" : "❤️ Like"} ({note.likes_count || 0})
+          </Button>
+          <Button variant="secondary" onClick={doBookmark} disabled={bookmarkLoading} className="w-full">
+            {bookmarked ? "🗑️ Remove bookmark" : "🔖 Bookmark"} ({note.bookmarks_count || 0})
+          </Button>
           <a
             href={note.file_url}
             download

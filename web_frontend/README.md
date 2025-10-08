@@ -1,53 +1,40 @@
 # NoteShare Frontend
 
-A clean, fast, and responsive React app for sharing PDF notes, built with React and TailwindCSS. This refactor removes Supabase and runs entirely in the browser using mock local data and localStorage for demo purposes.
+A clean, fast, and responsive React app for sharing PDF notes, built with React, TailwindCSS, and Supabase (Auth, Database, Storage).
 
 ## Overview and Features
 
-NoteShare focuses on simplicity and speed.
-- Modern UI built with TailwindCSS using the Ocean Professional theme
+- Ocean Professional theme with responsive UI
 - Routing: “/” (Dashboard), “/auth”, “/upload” (protected), “/profile” (protected), “/note/:id”, 404
-- Local mock authentication (email/password) stored in localStorage
-- Stubbed PDF "upload" (object URL) and local notes storage in localStorage
-- Dashboard search, filter by tag, sort (newest, popular, alpha), and pagination
-- Note detail page with PDF preview via object/embed, like/bookmark counters (naive demo, per-user state)
-- Profile page lists the user’s uploads and allows deleting own notes
-
-Code highlights:
-- Auth helpers in src/hooks/useAuth.js handle local session state (no network)
-- Storage helpers in src/lib/storage.js (stub upload) and local database helpers in src/lib/db.js
-- Seed notes are automatically added on first run
+- Supabase Auth: email/password and Google OAuth
+- Supabase Database: notes, likes, bookmarks, profiles tables
+- Supabase Storage: uploads PDFs to the "notes" bucket with public or signed URLs
+- Dashboard search, tag filter, sort (newest, popular, alpha), and pagination
+- Note detail page with PDF preview, like and bookmark toggles (idempotent)
+- Profile lists user uploads with delete controls
 
 ## Getting Started
 
-### 1) Install dependencies
+1) Install dependencies
 - npm install
 
-### 2) Start the development server
+2) Environment variables
+Create a .env file (see .env.example for keys):
+- REACT_APP_SUPABASE_URL
+- REACT_APP_SUPABASE_ANON_KEY
+- REACT_APP_OAUTH_REDIRECT_URL (defaults to http://localhost:3000/auth)
+- REACT_APP_SITE_URL (optional, often same as app URL)
+
+3) Start the development server
 - npm start
 
 The app will be available at http://localhost:3000.
 
-No environment variables are required. The app persists data in your browser’s localStorage under keys like ns_notes and ns_session.
+## Supabase Notes
 
-## Data Model (Local)
-
-- Notes are stored in localStorage (key: ns_notes) with fields:
-  - id, user_id, title, description, subject, tags, file_url, file_path, likes_count, bookmarks_count, created_at
-- Per-user likes and bookmarks are tracked via sets in localStorage:
-  - ns_likes_<userId>, ns_bookmarks_<userId>
-- Users are stored locally (key: ns_users) with fields:
-  - id, email, password (demo only; do not use in production)
-
-Important: This is a demo-only in-browser implementation and not secure. Do not use for production.
-
-## Future Backend Integration
-
-When integrating with a real backend (Supabase, Firebase, or custom API):
-- Replace src/hooks/useAuth.js to call real auth endpoints
-- Replace src/lib/db.js methods to call your database/API (fetchNotes, fetchNoteById, insertNote, toggleLike, toggleBookmark, fetchUserNotes, deleteNote)
-- Replace src/lib/storage.js uploadPdf to upload to your storage backend (e.g., Supabase Storage, S3) and return a public or signed URL
-- Remove or migrate localStorage data as needed
+- Storage uploads go to the "notes" bucket. The app returns both publicUrl and a signed URL fallback.
+- Auth redirect uses REACT_APP_OAUTH_REDIRECT_URL if set, otherwise defaults to http://localhost:3000/auth.
+- Likes and bookmarks are toggled based on existence and counts are updated atomically.
 
 ## Available Scripts
 
@@ -56,11 +43,8 @@ When integrating with a real backend (Supabase, Firebase, or custom API):
 - npm run build: Builds the app for production
 - npm run eject: Ejects configuration (irreversible)
 
-## Notes on PDF Preview
-
-The note detail page uses an object/embed element to preview PDFs via their URL (object URLs for uploaded files or public URLs for seed data). For production, consider secure file hosting and signed URLs if needed.
-
 ## Troubleshooting
 
-- If you don’t see any notes initially, clear localStorage and refresh. Seed notes are created on first load.
-- If uploads don’t preview, ensure you selected a PDF file and your browser allows object URL previews.
+- Ensure .env variables are set correctly.
+- If you see auth redirect issues, confirm REACT_APP_OAUTH_REDIRECT_URL is whitelisted in Supabase Auth settings.
+- If storage URLs are not public, a signed URL will be created automatically.

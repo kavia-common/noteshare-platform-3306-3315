@@ -2,7 +2,6 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import SearchBar from "./SearchBar";
 import Button from "./Button";
-import { Theme } from "../styles/tokens";
 
 /**
  * PUBLIC_INTERFACE

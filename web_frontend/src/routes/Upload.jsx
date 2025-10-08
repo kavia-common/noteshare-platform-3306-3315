@@ -32,16 +32,14 @@ export default function Upload() {
     setBusy(true);
     setMsg("");
     try {
-      const { path, publicUrl } = await uploadPdf(file, `user-${user.id}`);
+      const { file_path, file_url } = await uploadPdf(file, `user-${user.id}`);
       await insertNote({
         title,
         description,
         tags,
-        file_path: path,
-        file_url: publicUrl,
+        file_path,
+        file_url,
         user_id: user.id,
-        likes_count: 0,
-        bookmarks_count: 0,
       });
       setMsg("Upload successful! You can view it on the dashboard.");
       setTitle("");
@@ -49,7 +47,7 @@ export default function Upload() {
       setTags([]);
       setFile(null);
     } catch (err) {
-      setMsg(err.message || "Upload failed");
+      setMsg(err?.message ? `Upload error: ${err.message}` : "Upload failed. Please try again.");
     } finally {
       setBusy(false);
     }
