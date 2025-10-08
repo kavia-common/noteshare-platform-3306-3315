@@ -18,9 +18,7 @@ export default function Profile() {
   }
 
   useEffect(() => {
-    let mounted = true;
     load().then(() => {});
-    return () => { mounted = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]);
 

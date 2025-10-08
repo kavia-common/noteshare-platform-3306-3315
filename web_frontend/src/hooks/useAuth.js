@@ -59,6 +59,7 @@ export function useAuth() {
 
   const signUpWithEmail = useCallback(async (email, password) => {
     setError(null);
+    // Use configured OAuth/email redirect if provided; otherwise default to /auth on current origin
     const redirectTo = process.env.REACT_APP_OAUTH_REDIRECT_URL || `${window.location.origin}/auth`;
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -73,6 +74,7 @@ export function useAuth() {
 
   const signInWithGoogle = useCallback(async () => {
     setError(null);
+    // Use configured OAuth redirect if provided; otherwise default to /auth on current origin
     const redirectTo = process.env.REACT_APP_OAUTH_REDIRECT_URL || `${window.location.origin}/auth`;
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
